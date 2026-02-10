@@ -1,0 +1,388 @@
+{% extends 'generic/object.html' %}
+{% load helpers %}
+{% load render_table from django_tables2 %}
+
+{% block extra_controls %}
+<div class="btn-group" role="group">
+    <!-- Export Button -->
+    <a href="{% url 'plugins:netbox_ssl_certificates:certificate_export' pk=object.pk %}"
+       class="btn btn-success"
+       title="Export certificate and private key">
+        <i class="mdi mdi-download"></i> Export
+    </a>
+
+    <!-- Verify Chain Button -->
+    {% if object.ca_certificate %}
+    <form method="post"
+          action="{% url 'plugins:netbox_ssl_certificates:certificate_verify_chain' pk=object.pk %}"
+          style="display: inline;">
+        {% csrf_token %}
+        <button type="submit"
+                class="btn btn-info"
+                title="Verify certificate chain">
+            <i class="mdi mdi-shield-check"></i> Verify Chain
+        </button>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Existing alerts section -->
+<div class="row mb-3">
+    <div class="col-12">
+        {% if object.is_expired %}
+        <div class="alert alert-danger" role="alert">
+            <i class="mdi mdi-alert-circle"></i>
+            <strong>Certificate Expired!</strong> This certificate expired on {{ object.valid_until|date:"Y-m-d H:i:s" }}.
+        </div>
+        {% elif object.days_until_expiry <= 30 and object.days_until_expiry >= 0 %}
+        <div class="alert alert-warning" role="alert">
+            <i class="mdi mdi-alert"></i>
+            <strong>Certificate Expiring Soon!</strong> This certificate will expire in {{ object.days_until_expiry }} days on {{ object.valid_until|date:"Y-m-d H:i:s" }}.
+        </div>
+        {% else %}
+        <div class="alert alert-success" role="alert">
+            <i class="mdi mdi-check-circle"></i>
+            <strong>Certificate Valid</strong> - Expires in {{ object.days_until_expiry }} days on {{ object.valid_until|date:"Y-m-d H:i:s" }}.
+        </div>
+        {% endif %}
+        
+        <!-- Chain Verification Alert -->
+        {% if object.ca_certificate %}
+        <div class="alert {% if object.chain_verified %}alert-success{% else %}alert-warning{% endif %}" role="alert">
+            <i class="mdi {% if object.chain_verified %}mdi-shield-check{% else %}mdi-shield-alert{% endif %}"></i>
+            <strong>Chain Verification:</strong> {{ object.chain_verification_message }}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <!-- Existing Certificate Details card -->
+        <div class="card">
+            <h5 class="card-header">Certificate Details</h5>
+            <div class="card-body">
+                <table class="table table-hover attr-table">
+                    <tr>
+                        <th scope="row">Name</th>
+                        <td>{{ object.name }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Common Name</th>
+                        <td><strong>{{ object.common_name }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Status</th>
+                        <td>
+                            {% if object.is_expired %}
+                                <span class="badge bg-danger">Expired</span>
+                            {% elif object.days_until_expiry <= 30 and object.days_until_expiry >= 0 %}
+                                <span class="badge bg-warning">Expiring Soon</span>
+                            {% else %}
+                                <span class="badge bg-success">Valid</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Issuer</th>
+                        <td>{{ object.issuer }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Serial Number</th>
+                        <td><code>{{ object.serial_number }}</code></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Valid From</th>
+                        <td>{{ object.valid_from|date:"Y-m-d H:i:s T" }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Valid Until</th>
+                        <td>
+                            {{ object.valid_until|date:"Y-m-d H:i:s T" }}
+                            {% if object.is_expired %}
+                                <span class="badge bg-danger ms-2">Expired</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Days Until Expiry</th>
+                        <td>
+                            {% if object.days_until_expiry < 0 %}
+                                {% with days_ago=object.days_until_expiry|add:"0" %}
+                                    <span class="text-danger">Expired {% widthratio days_ago 1 -1 %} days ago</span>
+                                {% endwith %}
+                            {% elif object.days_until_expiry <= 30 %}
+                                <span class="text-warning">{{ object.days_until_expiry }} days</span>
+                            {% else %}
+                                <span class="text-success">{{ object.days_until_expiry }} days</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Self-Signed</th>
+                        <td>
+                            {% if object.is_self_signed %}
+                                <span class="badge bg-warning">Yes</span>
+                            {% else %}
+                                <span class="badge bg-success">No</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if object.ca_certificate %}
+                    <tr>
+                        <th scope="row">CA Certificate</th>
+                        <td>
+                            <a href="{% url 'plugins:netbox_ssl_certificates:certificate' pk=object.ca_certificate.pk %}">
+                                {{ object.ca_certificate.name }}
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Chain Verified</th>
+                        <td>
+                            {% if object.chain_verified %}
+                                <span class="badge bg-success">
+                                    <i class="mdi mdi-check"></i> Verified
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger">
+                                    <i class="mdi mdi-close"></i> Not Verified
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+
+        <!-- Assigned Objects Card -->
+        <div class="card mt-3">
+            <h5 class="card-header">
+                Assigned Objects
+                <span class="badge bg-secondary float-end">{{ object.assigned_objects_count }}</span>
+            </h5>
+            <div class="card-body">
+                {% if object.devices.exists or object.virtual_machines.exists or object.sites.exists %}
+                    {% if object.devices.exists %}
+                    <h6 class="text-muted">
+                        <i class="mdi mdi-server"></i> Devices ({{ object.devices.count }})
+                    </h6>
+                    <ul class="list-unstyled mb-3">
+                        {% for device in object.devices.all %}
+                        <li class="mb-1">
+                            <a href="{{ device.get_absolute_url }}">{{ device }}</a>
+                            {% if device.site %}
+                                <small class="text-muted">@ {{ device.site }}</small>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    
+                    {% if object.virtual_machines.exists %}
+                    <h6 class="text-muted">
+                        <i class="mdi mdi-monitor"></i> Virtual Machines ({{ object.virtual_machines.count }})
+                    </h6>
+                    <ul class="list-unstyled mb-3">
+                        {% for vm in object.virtual_machines.all %}
+                        <li class="mb-1">
+                            <a href="{{ vm.get_absolute_url }}">{{ vm }}</a>
+                            {% if vm.cluster %}
+                                <small class="text-muted">@ {{ vm.cluster }}</small>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    
+                    {% if object.sites.exists %}
+                    <h6 class="text-muted">
+                        <i class="mdi mdi-map-marker"></i> Sites ({{ object.sites.count }})
+                    </h6>
+                    <ul class="list-unstyled mb-0">
+                        {% for site in object.sites.all %}
+                        <li class="mb-1">
+                            <a href="{{ site.get_absolute_url }}">{{ site }}</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted mb-0">
+                        <i class="mdi mdi-information-outline"></i>
+                        No objects assigned to this certificate.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if object.description %}
+        <div class="card mt-3">
+            <h5 class="card-header">Description</h5>
+            <div class="card-body">
+                {{ object.description|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if object.comments %}
+        <div class="card mt-3">
+            <h5 class="card-header">Comments</h5>
+            <div class="card-body">
+                {{ object.comments|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-6">
+        <!-- Technical Details card -->
+        <div class="card">
+            <h5 class="card-header">Technical Details</h5>
+            <div class="card-body">
+                <table class="table table-hover attr-table">
+                    <tr>
+                        <th scope="row">Key Size</th>
+                        <td>{{ object.key_size }} bits</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Algorithm</th>
+                        <td><code>{{ object.algorithm }}</code></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">SHA-256 Fingerprint</th>
+                        <td><code class="text-break">{{ object.fingerprint_sha256 }}</code></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Has Private Key</th>
+                        <td>
+                            {% if object.private_key %}
+                                <i class="mdi mdi-check-circle text-success"></i> Yes
+                            {% else %}
+                                <i class="mdi mdi-close-circle text-muted"></i> No
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        {% if object.subject_alternative_names %}
+        <div class="card mt-3">
+            <h5 class="card-header">
+                Subject Alternative Names (SANs)
+                <span class="badge bg-secondary float-end">{{ object.subject_alternative_names|length }}</span>
+            </h5>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    {% for san in object.subject_alternative_names %}
+                    <li class="mb-1">
+                        <i class="mdi mdi-chevron-right"></i>
+                        <code>{{ san }}</code>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Signed Certificates (if this is a CA) -->
+        {% if object.signed_certificates.exists %}
+        <div class="card mt-3">
+            <h5 class="card-header">
+                Signed Certificates
+                <span class="badge bg-secondary float-end">{{ object.signed_certificates.count }}</span>
+            </h5>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    {% for signed_cert in object.signed_certificates.all %}
+                    <li class="mb-1">
+                        <i class="mdi mdi-certificate"></i>
+                        <a href="{% url 'plugins:netbox_ssl_certificates:certificate' pk=signed_cert.pk %}">
+                            {{ signed_cert.name }}
+                        </a>
+                        <small class="text-muted">({{ signed_cert.common_name }})</small>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card mt-3">
+            <h5 class="card-header">Certificate Content</h5>
+            <div class="card-body">
+                <button class="btn btn-sm btn-outline-primary mb-2" type="button" 
+                        data-bs-toggle="collapse" data-bs-target="#certContent">
+                    <i class="mdi mdi-eye"></i> Show Certificate
+                </button>
+                <div class="collapse" id="certContent">
+                    <pre class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"><code>{{ object.certificate_file }}</code></pre>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('certContent')">
+                        <i class="mdi mdi-content-copy"></i> Copy
+                    </button>
+                </div>
+                
+                {% if object.private_key %}
+                <button class="btn btn-sm btn-outline-warning mt-2" type="button" 
+                        data-bs-toggle="collapse" data-bs-target="#keyContent">
+                    <i class="mdi mdi-key"></i> Show Private Key
+                </button>
+                <div class="collapse" id="keyContent">
+                    <div class="alert alert-warning mt-2">
+                        <i class="mdi mdi-alert"></i> <strong>Warning:</strong> Keep private keys secure!
+                    </div>
+                    <pre class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;"><code>{{ object.private_key }}</code></pre>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('keyContent')">
+                        <i class="mdi mdi-content-copy"></i> Copy
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <h5 class="card-header">Metadata</h5>
+            <div class="card-body">
+                <table class="table table-hover attr-table">
+                    <tr>
+                        <th scope="row">Created</th>
+                        <td>{{ object.created|date:"Y-m-d H:i:s" }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Last Updated</th>
+                        <td>{{ object.last_updated|date:"Y-m-d H:i:s" }}</td>
+                    </tr>
+                    {% if object.tags.all %}
+                    <tr>
+                        <th scope="row">Tags</th>
+                        <td>
+                            {% for tag in object.tags.all %}
+                                <span class="badge" style="background-color: #{{ tag.color }}">{{ tag.name }}</span>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    const text = element.querySelector('code').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        alert('Copied to clipboard!');
+    });
+}
+</script>
+{% endblock %}

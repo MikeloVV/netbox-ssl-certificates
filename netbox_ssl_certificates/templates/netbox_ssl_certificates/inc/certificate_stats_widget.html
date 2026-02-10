@@ -1,0 +1,71 @@
+<div class="card">
+    <div class="card-header">
+        <strong><i class="mdi mdi-certificate"></i> SSL Certificates</strong>
+    </div>
+    <div class="card-body">
+        <div class="row text-center mb-3">
+            <div class="col-3">
+                <a href="{{ certificate_list_url }}" class="text-decoration-none">
+                    <h3 class="text-info mb-0">{{ total }}</h3>
+                    <small class="text-muted">Total</small>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="{{ certificate_list_url }}?status=valid" class="text-decoration-none">
+                    <h3 class="text-success mb-0">{{ valid }}</h3>
+                    <small class="text-muted">Valid</small>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="{{ certificate_list_url }}?status=expiring_soon" class="text-decoration-none">
+                    <h3 class="text-warning mb-0">{{ expiring_soon }}</h3>
+                    <small class="text-muted">Expiring Soon</small>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="{{ certificate_list_url }}?status=expired" class="text-decoration-none">
+                    <h3 class="text-danger mb-0">{{ expired }}</h3>
+                    <small class="text-muted">Expired</small>
+                </a>
+            </div>
+        </div>
+        
+        {% if expiring_certificates %}
+        <hr>
+        <h6 class="card-subtitle mb-2 text-muted">Expiring Soon</h6>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <tbody>
+                    {% for cert in expiring_certificates %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'plugins:netbox_ssl_certificates:certificate' pk=cert.pk %}">
+                                {{ cert.name }}
+                            </a>
+                        </td>
+                        <td class="text-end">
+                            {% if cert.days_until_expiry <= 7 %}
+                                <span class="badge bg-danger">{{ cert.days_until_expiry }} days</span>
+                            {% elif cert.days_until_expiry <= 30 %}
+                                <span class="badge bg-warning">{{ cert.days_until_expiry }} days</span>
+                            {% else %}
+                                <span class="badge bg-success">{{ cert.days_until_expiry }} days</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-success mb-0" role="alert">
+            <i class="mdi mdi-check-circle"></i> No certificates expiring soon
+        </div>
+        {% endif %}
+    </div>
+    <div class="card-footer text-end">
+        <a href="{{ certificate_list_url }}" class="btn btn-sm btn-primary">
+            <i class="mdi mdi-certificate"></i> View All Certificates
+        </a>
+    </div>
+</div>

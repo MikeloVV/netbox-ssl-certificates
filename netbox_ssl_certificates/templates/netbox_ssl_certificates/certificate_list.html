@@ -1,0 +1,51 @@
+{% extends 'generic/object_list.html' %}
+{% load helpers %}
+
+{% block title %}SSL Certificates{% endblock %}
+
+{% block extra_controls %}
+<div class="btn-group" role="group">
+    <a href="{% url 'plugins:netbox_ssl_certificates:certificate_add' %}" class="btn btn-sm btn-primary">
+        <i class="mdi mdi-plus-thick"></i> Add Certificate
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h2 class="text-success">{{ stats.valid }}</h2>
+                            <p class="text-muted">Valid Certificates</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h2 class="text-warning">{{ stats.expiring_soon }}</h2>
+                            <p class="text-muted">Expiring Soon (≤30 days)</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h2 class="text-danger">{{ stats.expired }}</h2>
+                            <p class="text-muted">Expired</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h2 class="text-info">{{ stats.total }}</h2>
+                            <p class="text-muted">Total Certificates</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ block.super }}
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends 'base/layout.html' %}
+{% load helpers %}
+
+{% block title %}Import Certificate{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1><i class="mdi mdi-upload"></i> Import Certificate from File</h1>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 class="card-title">Certificate Files</h5>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.certificate_file.label_tag }}
+                                {{ form.certificate_file }}
+                                {% if form.certificate_file.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.certificate_file.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">{{ form.certificate_file.help_text }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.private_key_file.label_tag }}
+                                {{ form.private_key_file }}
+                                {% if form.private_key_file.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.private_key_file.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">{{ form.private_key_file.help_text }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.ca_certificate_file.label_tag }}
+                                {{ form.ca_certificate_file }}
+                                {% if form.ca_certificate_file.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.ca_certificate_file.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">{{ form.ca_certificate_file.help_text }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check mt-4">
+                                    {{ form.verify_chain }}
+                                    {{ form.verify_chain.label_tag }}
+                                </div>
+                                <small class="form-text text-muted">{{ form.verify_chain.help_text }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 class="card-title">Certificate Details</h5>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.name.label_tag }}
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.name.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">{{ form.name.help_text }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.description.label_tag }}
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.description.errors }}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">{{ form.description.help_text }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 class="card-title">Assignment (Optional)</h5>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.devices.label_tag }}
+                                {{ form.devices }}
+                                <small class="form-text text-muted">{{ form.devices.help_text }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.virtual_machines.label_tag }}
+                                {{ form.virtual_machines }}
+                                <small class="form-text text-muted">{{ form.virtual_machines.help_text }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.sites.label_tag }}
+                                {{ form.sites }}
+                                <small class="form-text text-muted">{{ form.sites.help_text }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="mdi mdi-upload"></i> Import Certificate
+                            </button>
+                            <a href="{% url 'plugins:netbox_ssl_certificates:certificate_list' %}" class="btn btn-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <strong><i class="mdi mdi-information"></i> Import Instructions</strong>
+            </div>
+            <div class="card-body">
+                <h6>Supported Formats</h6>
+                <ul>
+                    <li>PEM encoded certificates (.crt, .pem, .cer)</li>
+                    <li>PEM encoded private keys (.key, .pem)</li>
+                </ul>
+                
+                <h6 class="mt-3">Steps</h6>
+                <ol>
+                    <li>Select certificate file (required)</li>
+                    <li>Optionally select private key file</li>
+                    <li>Optionally select CA certificate for chain verification</li>
+                    <li>Provide a unique name</li>
+                    <li>Optionally assign to devices/VMs/sites</li>
+                    <li>Click "Import Certificate"</li>
+                </ol>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="mdi mdi-information"></i>
+                    <strong>Note:</strong> Certificate metadata will be automatically extracted from the file.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

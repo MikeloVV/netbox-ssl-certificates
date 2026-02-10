@@ -1,0 +1,252 @@
+{% extends 'base/layout.html' %}
+{% load helpers %}
+
+{% block title %}SSL Certificates Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1><i class="mdi mdi-certificate"></i> SSL Certificates Dashboard</h1>
+            <a href="{% url 'plugins:netbox_ssl_certificates:certificate_add' %}" class="btn btn-primary">
+                <i class="mdi mdi-plus-thick"></i> Add Certificate
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-info">
+            <div class="card-body text-center">
+                <a href="{% url 'plugins:netbox_ssl_certificates:certificate_list' %}" class="text-decoration-none">
+                    <i class="mdi mdi-certificate text-info" style="font-size: 3rem;"></i>
+                    <h2 class="mt-2 text-info">{{ total }}</h2>
+                    <p class="text-muted mb-0">Total Certificates</p>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <a href="{% url 'plugins:netbox_ssl_certificates:certificate_list' %}?status=valid" class="text-decoration-none">
+                    <i class="mdi mdi-check-circle text-success" style="font-size: 3rem;"></i>
+                    <h2 class="mt-2 text-success">{{ valid }}</h2>
+                    <p class="text-muted mb-0">Valid Certificates</p>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <a href="{% url 'plugins:netbox_ssl_certificates:certificate_list' %}?status=expiring_soon" class="text-decoration-none">
+                    <i class="mdi mdi-clock-alert text-warning" style="font-size: 3rem;"></i>
+                    <h2 class="mt-2 text-warning">{{ expiring_soon }}</h2>
+                    <p class="text-muted mb-0">Expiring Soon (≤30d)</p>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-danger">
+            <div class="card-body text-center">
+                <a href="{% url 'plugins:netbox_ssl_certificates:certificate_list' %}?status=expired" class="text-decoration-none">
+                    <i class="mdi mdi-alert-circle text-danger" style="font-size: 3rem;"></i>
+                    <h2 class="mt-2 text-danger">{{ expired }}</h2>
+                    <p class="text-muted mb-0">Expired Certificates</p>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Expiry Timeline -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <strong><i class="mdi mdi-chart-timeline"></i> Expiry Timeline</strong>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <h4 class="text-danger">{{ expiring_7_days }}</h4>
+                            <p class="text-muted mb-0">Within 7 days</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <h4 class="text-warning">{{ expiring_30_days }}</h4>
+                            <p class="text-muted mb-0">8-30 days</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <h4 class="text-info">{{ expiring_90_days }}</h4>
+                            <p class="text-muted mb-0">31-90 days</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <h4 class="text-secondary">{{ self_signed }}</h4>
+                            <p class="text-muted mb-0">Self-Signed</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Certificate Lists -->
+<div class="row">
+    <!-- Expiring Soon -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-white">
+                <strong><i class="mdi mdi-clock-alert"></i> Expiring Soon</strong>
+            </div>
+            <div class="card-body p-0">
+                {% if expiring_certificates %}
+                <div class="list-group list-group-flush">
+                    {% for cert in expiring_certificates %}
+                    <a href="{% url 'plugins:netbox_ssl_certificates:certificate' pk=cert.pk %}" 
+                       class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong>{{ cert.name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ cert.common_name }}</small>
+                            </div>
+                            <div class="text-end ms-2">
+                                {% if cert.days_until_expiry <= 7 %}
+                                    <span class="badge bg-danger">{{ cert.days_until_expiry }}d</span>
+                                {% else %}
+                                    <span class="badge bg-warning">{{ cert.days_until_expiry }}d</span>
+                                {% endif %}
+                                <br>
+                                <small class="text-muted">{{ cert.valid_until|date:"Y-m-d" }}</small>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-3 text-center text-muted">
+                    <i class="mdi mdi-check-circle text-success" style="font-size: 2rem;"></i>
+                    <p class="mb-0 mt-2">No certificates expiring soon</p>
+                </div>
+                {% endif %}
+            </div>
+            {% if expiring_certificates %}
+            <div class="card-footer text-center">
+                <a href="{% url 'plugins:netbox_ssl_certificates:certificate_list' %}?status=expiring_soon" class="btn btn-sm btn-outline-warning">
+                    View All
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Recently Expired -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-danger text-white">
+                <strong><i class="mdi mdi-alert-circle"></i> Recently Expired</strong>
+            </div>
+            <div class="card-body p-0">
+                {% if recently_expired %}
+                <div class="list-group list-group-flush">
+                    {% for cert in recently_expired %}
+                    <a href="{% url 'plugins:netbox_ssl_certificates:certificate' pk=cert.pk %}" 
+                       class="list-group-item list-group-item-action list-group-item-danger">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong>{{ cert.name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ cert.common_name }}</small>
+                            </div>
+                            <div class="text-end ms-2">
+                                <span class="badge bg-danger">Expired</span>
+                                <br>
+                                <small class="text-muted">{{ cert.valid_until|date:"Y-m-d" }}</small>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-3 text-center text-muted">
+                    <i class="mdi mdi-check-circle text-success" style="font-size: 2rem;"></i>
+                    <p class="mb-0 mt-2">No recently expired certificates</p>
+                </div>
+                {% endif %}
+            </div>
+            {% if recently_expired %}
+            <div class="card-footer text-center">
+                <a href="{% url 'plugins:netbox_ssl_certificates:certificate_list' %}?status=expired" class="btn btn-sm btn-outline-danger">
+                    View All
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Recently Added -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <strong><i class="mdi mdi-new-box"></i> Recently Added</strong>
+            </div>
+            <div class="card-body p-0">
+                {% if recently_added %}
+                <div class="list-group list-group-flush">
+                    {% for cert in recently_added %}
+                    <a href="{% url 'plugins:netbox_ssl_certificates:certificate' pk=cert.pk %}" 
+                       class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong>{{ cert.name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ cert.common_name }}</small>
+                            </div>
+                            <div class="text-end ms-2">
+                                {% if cert.is_expired %}
+                                    <span class="badge bg-danger">Expired</span>
+                                {% elif cert.days_until_expiry <= 30 %}
+                                    <span class="badge bg-warning">{{ cert.days_until_expiry }}d</span>
+                                {% else %}
+                                    <span class="badge bg-success">Valid</span>
+                                {% endif %}
+                                <br>
+                                <small class="text-muted">{{ cert.created|date:"Y-m-d" }}</small>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-3 text-center text-muted">
+                    <i class="mdi mdi-certificate-outline" style="font-size: 2rem;"></i>
+                    <p class="mb-0 mt-2">No certificates yet</p>
+                </div>
+                {% endif %}
+            </div>
+            {% if recently_added %}
+            <div class="card-footer text-center">
+                <a href="{% url 'plugins:netbox_ssl_certificates:certificate_list' %}" class="btn btn-sm btn-outline-success">
+                    View All
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+/* Custom styles for SSL Certificates plugin */
+
+.certificate-status-valid {
+    color: #28a745;
+}
+
+.certificate-status-expiring {
+    color: #ffc107;
+}
+
+.certificate-status-expired {
+    color: #dc3545;
+}
+
+.certificate-fingerprint {
+    font-family: 'Courier New', monospace;
+    font-size: 0.85em;
+    word-break: break-all;
+}
+
+.certificate-san-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.certificate-content pre {
+    max-height: 400px;
+    overflow-y: auto;
+}

@@ -1,0 +1,57 @@
+{% extends 'generic/object_edit.html' %}
+{% load form_helpers %}
+
+{% block form %}
+<div class="row">
+    <div class="col-md-12">
+        {% render_field form.name %}
+        {% render_field form.description %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <strong>Certificate</strong>
+            </div>
+            <div class="card-body">
+                {% render_field form.certificate_file %}
+                <div class="form-text">
+                    <strong>Example:</strong>
+                    <pre class="mb-0">-----BEGIN CERTIFICATE-----
+MIIDXTCCAkWgAwIBAgIJAKJ...
+-----END CERTIFICATE-----</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <strong>Private Key (Optional)</strong>
+            </div>
+            <div class="card-body">
+                {% render_field form.private_key %}
+                <div class="form-text">
+                    <strong>Example:</strong>
+                    <pre class="mb-0">-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0B...
+-----END PRIVATE KEY-----</pre>
+                </div>
+                <div class="alert alert-warning mt-2" role="alert">
+                    <i class="mdi mdi-alert"></i> Private keys are stored encrypted in the database. Only add if necessary.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        {% render_field form.tags %}
+        {% render_field form.comments %}
+    </div>
+</div>
+{% endblock %}
