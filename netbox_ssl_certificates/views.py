@@ -103,8 +103,8 @@ class CertificateListView(generic.ObjectListView):
     
     def get_extra_context(self, request):
         """Add statistics to context"""
-        # Используйте self.filterset.qs вместо self.queryset для учета фильтров
-        queryset = self.filterset.qs if hasattr(self, 'filterset') else self.queryset
+        # ИСПРАВЛЕНО: Используем get_queryset() вместо self.queryset
+        queryset = self.get_queryset()
         
         stats = {
             'total': queryset.count(),
