@@ -1,60 +1,34 @@
 from netbox.plugins import PluginTemplateExtension
 
 
-class DeviceCertificates(PluginTemplateExtension):
-    """Display certificates on device page"""
+class ObjectCertificates(PluginTemplateExtension):
+    """Display certificates on device, VM and site pages"""
     
-    model = 'dcim.device'
-    
-    def right_page(self):
-        """Add certificates panel to device page"""
-        obj = self.context['object']
-        certificates = obj.certificates.all()
-        
-        if not certificates:
-            return ''
-        
-        return self.render('netbox_ssl_certificates/inc/device_certificates.html', extra_context={
-            'certificates': certificates,
-            'object_type': 'Device',
-        })
-
-
-class VirtualMachineCertificates(PluginTemplateExtension):
-    """Display certificates on virtual machine page"""
-    
-    model = 'virtualization.virtualmachine'
+    # Один класс для всех типов объектов
+    model = ['dcim.device', 'virtualization.virtualmachine', 'dcim.site']
     
     def right_page(self):
-        """Add certificates panel to VM page"""
-        obj = self.context['object']
-        certificates = obj.certificates.all()
+        """Add certificates panel to object page"""
+        obj = self.context.get('object')
         
-        if not certificates:
+        if not obj or not hasattr(obj, 'certificates'):
             return ''
         
-        return self.render('netbox_ssl_certificates/inc/device_certificates.html', extra_context={
-            'certificates': certificates,
-            'object_type': 'Virtual Machine',
-        })
-
-
-class SiteCertificates(PluginTemplateExtension):
-    """Display certificates on site page"""
-    
-    model = 'dcim.site'
-    
-    def right_page(self):
-        """Add certificates panel to site page"""
-        obj = self.context['object']
         certificates = obj.certificates.all()
         
-        if not certificates:
+        if not certificates.exists():
             return ''
         
-        return self.render('netbox_ssl_certificates/inc/device_certificates.html', extra_context={
-            'certificates': certificates,
-            'object_type': 'Site',
-        })
+        # Определяем тип объекта для заголовка
+        object_type = obj._meta.verbose_name.title()
+        
+        return self.render(
+            'netbox_ssl_certificates/inc/device_certificates.html',
+            extra_context={
+                'certificates': certificates,
+                'object_type': object_type,
+            }
+        )
 
-template_extensions = [DeviceCertificates, VirtualMachineCertificates, SiteCertificates]
+
+template_extensions = [ObjectCertificates]
