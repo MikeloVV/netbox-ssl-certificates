@@ -4,7 +4,6 @@ from netbox.plugins import PluginTemplateExtension
 class ObjectCertificates(PluginTemplateExtension):
     """Display certificates on device, VM and site pages"""
     
-    # Один класс для всех типов объектов
     model = ['dcim.device', 'virtualization.virtualmachine', 'dcim.site']
     
     def right_page(self):
@@ -19,7 +18,6 @@ class ObjectCertificates(PluginTemplateExtension):
         if not certificates.exists():
             return ''
         
-        # Определяем тип объекта для заголовка
         object_type = obj._meta.verbose_name.title()
         
         return self.render(

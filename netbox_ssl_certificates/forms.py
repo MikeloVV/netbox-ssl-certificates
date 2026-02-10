@@ -1,9 +1,22 @@
 from django import forms
 from netbox.forms import NetBoxModelForm, NetBoxModelFilterSetForm
-from utilities.forms.fields import DynamicModelMultipleChoiceField, TagFilterField, DynamicModelChoiceField
 from dcim.models import Device, Site
 from virtualization.models import VirtualMachine
 from .models import Certificate
+
+# Исправленный импорт для NetBox 4.4
+try:
+    from utilities.forms.fields import (
+        DynamicModelMultipleChoiceField,
+        DynamicModelChoiceField,
+        TagFilterField
+    )
+except ImportError:
+    from utilities.forms.fields import (
+        DynamicModelMultipleChoiceField,
+        DynamicModelChoiceField
+    )
+    from utilities.forms import TagFilterField
 
 
 class CertificateForm(NetBoxModelForm):

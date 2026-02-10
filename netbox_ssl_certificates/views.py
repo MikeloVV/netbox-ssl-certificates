@@ -103,14 +103,14 @@ class CertificateListView(generic.ObjectListView):
     
     def get_extra_context(self, request):
         """Add statistics to context"""
-        queryset = self.queryset
+        # Используйте self.filterset.qs вместо self.queryset для учета фильтров
+        queryset = self.filterset.qs if hasattr(self, 'filterset') else self.queryset
         
         stats = {
             'total': queryset.count(),
             'valid': queryset.filter(
-                is_expired=False
-            ).exclude(
-                days_until_expiry__lte=30
+                is_expired=False,
+                days_until_expiry__gt=30
             ).count(),
             'expiring_soon': queryset.filter(
                 is_expired=False,
