@@ -13,70 +13,70 @@ import io
 
 class CertificateDashboardView(LoginRequiredMixin, TemplateView):
     """Dashboard view with certificate statistics and charts"""
-
+    
     template_name = 'netbox_ssl_certificates/dashboard.html'
-
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
+        
         # Общая статистика
         total = models.Certificate.objects.count()
         expired = models.Certificate.objects.filter(is_expired=True).count()
-
-        # ИСПРАВЛЕНО: Правильный фильтр для expiring_soon
+        
+        # Правильный фильтр для expiring_soon
         expiring_soon = models.Certificate.objects.filter(
             is_expired=False,
             days_until_expiry__lte=30,
             days_until_expiry__gte=0
         ).count()
-
+        
         valid = models.Certificate.objects.filter(
             is_expired=False,
-            days_until_expiry__gt=30  # ИСПРАВЛЕНО: больше 30 дней
+            days_until_expiry__gt=30
         ).count()
-
+        
         # Статистика по срокам истечения
         expiring_7_days = models.Certificate.objects.filter(
             is_expired=False,
             days_until_expiry__lte=7,
             days_until_expiry__gte=0
         ).count()
-
+        
         expiring_30_days = models.Certificate.objects.filter(
             is_expired=False,
             days_until_expiry__lte=30,
             days_until_expiry__gt=7
         ).count()
-
+        
         expiring_90_days = models.Certificate.objects.filter(
             is_expired=False,
             days_until_expiry__lte=90,
             days_until_expiry__gt=30
         ).count()
-
+        
         # Self-signed сертификаты
         self_signed = models.Certificate.objects.filter(is_self_signed=True).count()
-
+        
         # Chain verified
         chain_verified = models.Certificate.objects.filter(
             chain_verified=True
         ).exclude(
             ca_certificate__isnull=True
         ).count()
-
-        # ИСПРАВЛЕНО: Списки сертификатов с правильными фильтрами
+        
+        # Списки сертификатов с правильными фильтрами
         expiring_certificates = models.Certificate.objects.filter(
             is_expired=False,
-            days_until_expiry__lte=30,  # ИСПРАВЛЕНО: только до 30 дней
+            days_until_expiry__lte=30,
             days_until_expiry__gte=0
         ).order_by('valid_until')[:10]
-
+        
         recently_expired = models.Certificate.objects.filter(
             is_expired=True
         ).order_by('-valid_until')[:10]
-
+        
         recently_added = models.Certificate.objects.order_by('-created')[:10]
-
+        
         context.update({
             'total': total,
             'expired': expired,
@@ -91,52 +91,40 @@ class CertificateDashboardView(LoginRequiredMixin, TemplateView):
             'recently_expired': recently_expired,
             'recently_added': recently_added,
         })
-
+        
         return context
 
 
 class CertificateListView(generic.ObjectListView):
+    """List view for certificates"""
+    
     queryset = models.Certificate.objects.all()
     table = tables.CertificateTable
     filterset = filtersets.CertificateFilterSet
     filterset_form = forms.CertificateFilterForm
     
-    def get_extra_context(self, request):
-        """Add statistics to context"""
-        # ИСПРАВЛЕНО: Используем get_queryset() вместо self.queryset
-        queryset = self.get_queryset()
-        
-        stats = {
-            'total': queryset.count(),
-            'valid': queryset.filter(
-                is_expired=False,
-                days_until_expiry__gt=30
-            ).count(),
-            'expiring_soon': queryset.filter(
-                is_expired=False,
-                days_until_expiry__lte=30,
-                days_until_expiry__gte=0
-            ).count(),
-            'expired': queryset.filter(is_expired=True).count(),
-        }
-        
-        return {'stats': stats}
+    # ИСПРАВЛЕНО: Простое решение без get_extra_context
+    # Статистика доступна на Dashboard
 
 
 class CertificateView(generic.ObjectView):
+    """Detail view for certificate"""
     queryset = models.Certificate.objects.all()
 
 
 class CertificateEditView(generic.ObjectEditView):
+    """Edit view for certificate"""
     queryset = models.Certificate.objects.all()
     form = forms.CertificateForm
 
 
 class CertificateDeleteView(generic.ObjectDeleteView):
+    """Delete view for certificate"""
     queryset = models.Certificate.objects.all()
 
 
 class CertificateBulkDeleteView(generic.BulkDeleteView):
+    """Bulk delete view for certificates"""
     queryset = models.Certificate.objects.all()
     table = tables.CertificateTable
 
