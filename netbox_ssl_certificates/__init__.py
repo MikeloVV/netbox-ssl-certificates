@@ -16,18 +16,5 @@ class SSLCertificatesConfig(PluginConfig):
         'enable_notifications': True,
         'notification_emails': [],
     }
-# Регистрация homepage panels
-#    def ready(self):
-#        super().ready()
-#        from . import homepage
-#        # Регистрируем панели
-#        from netbox.plugins import register_homepage_panels
-#        register_homepage_panels(homepage.panels)
-
-#def ready(self):
-#        super().ready()
-#        
-#        # Register template extensions
-#        from . import template_content
-        
+    
 config = SSLCertificatesConfig
