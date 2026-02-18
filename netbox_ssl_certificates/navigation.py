@@ -17,13 +17,23 @@ menu = PluginMenu(
             "Certificates",
             (
                 PluginMenuItem(
-                    link="plugins:netbox_ssl_certificates:sslcertificate_list",
-                    link_text="SSL Certificates",
+                    link="plugins:netbox_ssl_certificates:certificate_list",
+                    link_text="Certificates",
                     buttons=(
                         PluginMenuButton(
-                            link="plugins:netbox_ssl_certificates:sslcertificate_add",
+                            link="plugins:netbox_ssl_certificates:certificate_add",
                             title="Add",
                             icon_class="mdi mdi-plus-thick",
+                        ),
+                        PluginMenuButton(
+                            link="plugins:netbox_ssl_certificates:certificate_import",
+                            title="Import",
+                            icon_class="mdi mdi-upload",
+                        ),
+                        PluginMenuButton(
+                            link="plugins:netbox_ssl_certificates:certificate_scan",
+                            title="Scan",
+                            icon_class="mdi mdi-magnify",
                         ),
                     ),
                 ),
