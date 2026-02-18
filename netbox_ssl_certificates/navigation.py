@@ -1,35 +1,33 @@
-from netbox.plugins import PluginMenuItem, PluginMenuButton
+from netbox.plugins import PluginMenu, PluginMenuButton, PluginMenuItem
 
-menu_items = (
-    PluginMenuItem(
-        link='plugins:netbox_ssl_certificates:certificate_dashboard',
-        link_text='Dashboard',
-        permissions=['netbox_ssl_certificates.view_certificate'],
-        buttons=()
-    ),
-    PluginMenuItem(
-        link='plugins:netbox_ssl_certificates:certificate_list',
-        link_text='Certificates',
-        permissions=['netbox_ssl_certificates.view_certificate'],
-        buttons=(
-            PluginMenuButton(
-                link='plugins:netbox_ssl_certificates:certificate_add',
-                title='Add',
-                icon_class='mdi mdi-plus-thick',
-                permissions=['netbox_ssl_certificates.add_certificate']
+menu = PluginMenu(
+    label="SSL Certificates",
+    icon_class="mdi mdi-certificate",
+    groups=(
+        (
+            "",
+            (
+                PluginMenuItem(
+                    link="plugins:netbox_ssl_certificates:certificate_dashboard",
+                    link_text="Dashboard",
+                ),
             ),
-            PluginMenuButton(
-                link='plugins:netbox_ssl_certificates:certificate_import',
-                title='Import',
-                icon_class='mdi mdi-upload',
-                permissions=['netbox_ssl_certificates.add_certificate']
+        ),
+        (
+            "Certificates",
+            (
+                PluginMenuItem(
+                    link="plugins:netbox_ssl_certificates:sslcertificate_list",
+                    link_text="SSL Certificates",
+                    buttons=(
+                        PluginMenuButton(
+                            link="plugins:netbox_ssl_certificates:sslcertificate_add",
+                            title="Add",
+                            icon_class="mdi mdi-plus-thick",
+                        ),
+                    ),
+                ),
             ),
-            PluginMenuButton(
-                link='plugins:netbox_ssl_certificates:certificate_scan',
-                title='Scan Domain',
-                icon_class='mdi mdi-radar',
-                permissions=['netbox_ssl_certificates.add_certificate']
-            ),
-        )
+        ),
     ),
 )
