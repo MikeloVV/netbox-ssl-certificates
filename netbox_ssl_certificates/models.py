@@ -133,12 +133,7 @@ class Certificate(NetBoxModel):
     is_self_signed = models.BooleanField(default=False, editable=False)
     key_size = models.IntegerField(null=True, blank=True, editable=False)
     algorithm = models.CharField(max_length=50, blank=True, editable=False)
-    is_expired = models.BooleanField(
-        default=False,
-        editable=False,
-        db_index=True
-    )
-    days_until_expiry = models.IntegerField(null=True, blank=True, editable=False)
+    
     
     # Chain verification status
     chain_verified = models.BooleanField(
@@ -165,6 +160,20 @@ class Certificate(NetBoxModel):
     def get_absolute_url(self):
         return reverse('plugins:netbox_ssl_certificates:certificate', args=[self.pk])
 
+    @property
+    def days_until_expiry(self):
+        """Dynamically calculate days until certificate expires"""
+        if not self.valid_until:
+           return None
+        delta = self.valid_until - datetime.now(timezone.utc)
+        return delta.days
+
+    @property
+    def is_expired(self):
+        """Dynamically check if certificate is expired"""
+        if not self.valid_until:
+             return False
+        return datetime.now(timezone.utc) > self.valid_until
     @property
     def status(self):
         """Return certificate status"""
@@ -255,9 +264,7 @@ class Certificate(NetBoxModel):
             self.valid_until = cert.not_valid_after_utc
             
             # Calculate expiry
-            now = datetime.now(timezone.utc)
-            self.is_expired = now > self.valid_until
-            self.days_until_expiry = (self.valid_until - now).days
+        
             
             # Fingerprint
             fingerprint = cert.fingerprint(hashes.SHA256())
