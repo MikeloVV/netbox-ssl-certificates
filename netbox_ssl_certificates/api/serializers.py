@@ -11,8 +11,12 @@ class CertificateSerializer(NetBoxModelSerializer):
     )
     
     display = serializers.SerializerMethodField()
+    
+    # ⚠️ Эти поля теперь @property — нужно явно объявить как read-only
     status = serializers.CharField(read_only=True)
     status_color = serializers.CharField(read_only=True)
+    is_expired = serializers.BooleanField(read_only=True)
+    days_until_expiry = serializers.IntegerField(read_only=True, allow_null=True)
     
     class Meta:
         model = Certificate

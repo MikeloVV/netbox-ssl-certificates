@@ -1,6 +1,8 @@
 from netbox.filtersets import NetBoxModelFilterSet
 from .models import Certificate
 from django.db import models
+from datetime import timedelta
+from django.utils import timezone
 import django_filters
 
 
@@ -22,9 +24,16 @@ class CertificateFilterSet(NetBoxModelFilterSet):
         label='Status'
     )
     
+    # Фильтр is_expired через метод (поскольку это property, а не поле БД)
+    is_expired = django_filters.BooleanFilter(
+        method='filter_is_expired',
+        label='Is Expired'
+    )
+    
     class Meta:
         model = Certificate
-        fields = ['id', 'name', 'common_name', 'issuer', 'is_expired', 'is_self_signed']
+        # ⚠️ Убрали 'is_expired' отсюда — он теперь объявлен явно выше
+        fields = ['id', 'name', 'common_name', 'issuer', 'is_self_signed']
     
     def search(self, queryset, name, value):
         """Custom search method"""
@@ -37,26 +46,28 @@ class CertificateFilterSet(NetBoxModelFilterSet):
             models.Q(description__icontains=value)
         )
     
+    def filter_is_expired(self, queryset, name, value):
+        """Filter by expiration based on valid_until field"""
+        now = timezone.now()
+        if value is True:
+            return queryset.filter(valid_until__lt=now)
+        elif value is False:
+            return queryset.filter(valid_until__gte=now)
+        return queryset
+    
     def filter_status(self, queryset, name, value):
-        """Filter by certificate status"""
-        from django.db.models import Q
-        from datetime import datetime, timezone
-        
-        now = datetime.now(timezone.utc)
+        """Filter by certificate status using valid_until field"""
+        now = timezone.now()
+        soon_threshold = now + timedelta(days=30)
         
         if value == 'expired':
-            return queryset.filter(is_expired=True)
+            return queryset.filter(valid_until__lt=now)
         elif value == 'expiring_soon':
             return queryset.filter(
-                is_expired=False,
-                days_until_expiry__lte=30,
-                days_until_expiry__gte=0
+                valid_until__gte=now,
+                valid_until__lte=soon_threshold
             )
         elif value == 'valid':
-            return queryset.filter(
-                is_expired=False
-            ).exclude(
-                days_until_expiry__lte=30
-            )
+            return queryset.filter(valid_until__gt=soon_threshold)
         
         return queryset
