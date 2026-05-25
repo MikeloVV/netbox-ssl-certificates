@@ -23,11 +23,19 @@ class CertificateTable(NetBoxTable):
         verbose_name='Valid Until'
     )
     
+    # ⚠️ Теперь это @property, поэтому:
+    #    - accessor явно указывает на property
+    #    - orderable=False (сортировать по property через ORM нельзя)
+    #    - order_by='valid_until' позволяет всё равно сортировать колонку,
+    #      используя поле БД valid_until (эквивалентно по смыслу)
     days_until_expiry = tables.Column(
+        accessor='days_until_expiry',
         verbose_name='Days Until Expiry',
+        order_by='valid_until',
         attrs={'td': {'class': 'text-end'}}
     )
     
+    # status тоже @property — указываем accessor и используем order_by='valid_until'
     status = tables.TemplateColumn(
         template_code='''
         {% if record.status == 'expired' %}
@@ -38,7 +46,8 @@ class CertificateTable(NetBoxTable):
             <span class="badge bg-success">Valid</span>
         {% endif %}
         ''',
-        verbose_name='Status'
+        verbose_name='Status',
+        order_by='valid_until'
     )
     
     class Meta(NetBoxTable.Meta):
