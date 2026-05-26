@@ -6,8 +6,8 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('netbox_ssl_certificates', '0002_update_indexes'),
-        ('dcim', '0001_initial'),
-        ('virtualization', '0001_initial'),
+        ('dcim', '__first__'),
+        ('virtualization', '__first__'),
     ]
 
     operations = [
