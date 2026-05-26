@@ -17,62 +17,67 @@ class CertificateDashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'netbox_ssl_certificates/dashboard.html'
     
     def get_context_data(self, **kwargs):
+        from datetime import timedelta
+        from django.utils import timezone
+        
         context = super().get_context_data(**kwargs)
+        
+        now = timezone.now()
+        in_7 = now + timedelta(days=7)
+        in_30 = now + timedelta(days=30)
+        in_90 = now + timedelta(days=90)
         
         # Общая статистика
         total = models.Certificate.objects.count()
-        expired = models.Certificate.objects.filter(is_expired=True).count()
+        expired = models.Certificate.objects.filter(valid_until__lt=now).count()
         
-        # Правильный фильтр для expiring_soon
+        # Expiring soon: от now до +30 дней
         expiring_soon = models.Certificate.objects.filter(
-            is_expired=False,
-            days_until_expiry__lte=30,
-            days_until_expiry__gte=0
+            valid_until__gte=now,
+            valid_until__lte=in_30,
         ).count()
         
+        # Valid: больше 30 дней до истечения
         valid = models.Certificate.objects.filter(
-            is_expired=False,
-            days_until_expiry__gt=30
+            valid_until__gt=in_30,
         ).count()
         
-        # Статистика по срокам истечения
+        # Critical: ≤7 дней (но ещё не истёкшие)
         expiring_7_days = models.Certificate.objects.filter(
-            is_expired=False,
-            days_until_expiry__lte=7,
-            days_until_expiry__gte=0
+            valid_until__gte=now,
+            valid_until__lte=in_7,
         ).count()
         
+        # Warning: 7 < days ≤ 30
         expiring_30_days = models.Certificate.objects.filter(
-            is_expired=False,
-            days_until_expiry__lte=30,
-            days_until_expiry__gt=7
+            valid_until__gt=in_7,
+            valid_until__lte=in_30,
         ).count()
         
+        # Notice: 30 < days ≤ 90
         expiring_90_days = models.Certificate.objects.filter(
-            is_expired=False,
-            days_until_expiry__lte=90,
-            days_until_expiry__gt=30
+            valid_until__gt=in_30,
+            valid_until__lte=in_90,
         ).count()
         
-        # Self-signed сертификаты
+        # Self-signed
         self_signed = models.Certificate.objects.filter(is_self_signed=True).count()
         
         # Chain verified
         chain_verified = models.Certificate.objects.filter(
-            chain_verified=True
+            chain_verified=True,
         ).exclude(
-            ca_certificate__isnull=True
+            ca_certificate__isnull=True,
         ).count()
         
-        # Списки сертификатов с правильными фильтрами
+        # Списки
         expiring_certificates = models.Certificate.objects.filter(
-            is_expired=False,
-            days_until_expiry__lte=30,
-            days_until_expiry__gte=0
+            valid_until__gte=now,
+            valid_until__lte=in_30,
         ).order_by('valid_until')[:10]
         
         recently_expired = models.Certificate.objects.filter(
-            is_expired=True
+            valid_until__lt=now,
         ).order_by('-valid_until')[:10]
         
         recently_added = models.Certificate.objects.order_by('-created')[:10]

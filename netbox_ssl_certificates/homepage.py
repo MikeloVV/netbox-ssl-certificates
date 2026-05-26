@@ -1,5 +1,6 @@
+from datetime import timedelta
+from django.utils import timezone
 from netbox.plugins import PluginHomePagePanel
-from django.db.models import Q
 from .models import Certificate
 
 
@@ -11,28 +12,25 @@ class CertificateStatsPanel(PluginHomePagePanel):
     def get_context_data(self, request):
         """Get certificate statistics"""
         
-        total = Certificate.objects.count()
-        expired = Certificate.objects.filter(is_expired=True).count()
-        expiring_soon = Certificate.objects.filter(
-            is_expired=False,
-            days_until_expiry__lte=30,
-            days_until_expiry__gte=0
-        ).count()
-        valid = Certificate.objects.filter(
-            is_expired=False
-        ).exclude(
-            days_until_expiry__lte=30
-        ).count()
+        now = timezone.now()
+        soon = now + timedelta(days=30)
         
-        # Ближайшие к истечению
+        total = Certificate.objects.count()
+        expired = Certificate.objects.filter(valid_until__lt=now).count()
+        expiring_soon = Certificate.objects.filter(
+            valid_until__gte=now,
+            valid_until__lte=soon,
+        ).count()
+        valid = Certificate.objects.filter(valid_until__gt=soon).count()
+        
+        # Ближайшие к истечению (не истёкшие)
         expiring_certificates = Certificate.objects.filter(
-            is_expired=False,
-            days_until_expiry__gte=0
+            valid_until__gte=now,
         ).order_by('valid_until')[:5]
         
         # Недавно истекшие
         recently_expired = Certificate.objects.filter(
-            is_expired=True
+            valid_until__lt=now,
         ).order_by('-valid_until')[:5]
         
         return {
