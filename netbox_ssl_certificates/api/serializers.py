@@ -12,7 +12,7 @@ class CertificateSerializer(NetBoxModelSerializer):
     
     display = serializers.SerializerMethodField()
     
-    # ⚠️ Эти поля теперь @property — нужно явно объявить как read-only
+    # Properties модели — явно объявляем как read_only поля
     status = serializers.CharField(read_only=True)
     status_color = serializers.CharField(read_only=True)
     is_expired = serializers.BooleanField(read_only=True)
@@ -28,11 +28,12 @@ class CertificateSerializer(NetBoxModelSerializer):
             'days_until_expiry', 'status', 'status_color', 'comments',
             'created', 'last_updated', 'tags', 'custom_fields'
         ]
+        # ⚠️ убрали is_expired и days_until_expiry из read_only_fields,
+        # т.к. они уже объявлены как read_only=True выше явно
         read_only_fields = [
             'common_name', 'subject_alternative_names', 'issuer', 'serial_number',
             'valid_from', 'valid_until', 'fingerprint_sha256', 'is_self_signed',
-            'key_size', 'algorithm', 'is_expired', 'days_until_expiry', 'status',
-            'status_color', 'display'
+            'key_size', 'algorithm', 'status', 'status_color', 'display'
         ]
         brief_fields = ['id', 'url', 'display', 'name', 'common_name']
     
